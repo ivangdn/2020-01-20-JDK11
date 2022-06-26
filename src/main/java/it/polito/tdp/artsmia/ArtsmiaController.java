@@ -1,8 +1,10 @@
 package it.polito.tdp.artsmia;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.artsmia.model.Adiacenza;
 import it.polito.tdp.artsmia.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -31,7 +33,7 @@ public class ArtsmiaController {
     private Button btnCalcolaPercorso;
 
     @FXML
-    private ComboBox<?> boxRuolo;
+    private ComboBox<String> boxRuolo;
 
     @FXML
     private TextField txtArtista;
@@ -42,23 +44,62 @@ public class ArtsmiaController {
     @FXML
     void doArtistiConnessi(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Calcola artisti connessi");
+    	List<Adiacenza> adiacenze = model.getAdiacenze();
+    	if(adiacenze==null) {
+    		txtResult.setText("Devi prima creare il grafo");
+    		return;
+    	}
+    	
+    	for(Adiacenza a : adiacenze) {
+    		txtResult.appendText(String.format("(%d,%d) = %d\n", a.getA1(), a.getA2(), a.getPeso()));
+    	}
     }
 
     @FXML
     void doCalcolaPercorso(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Calcola percorso");
+    	int artista;
+    	try {
+    		artista = Integer.parseInt(txtArtista.getText());
+    	} catch(NumberFormatException e) {
+    		txtResult.setText("L'ID dell'artista deve essere un valore numerico");
+    		return;
+    	}
+    	
+    	List<Integer> artisti = model.getVertici();
+    	if(artisti==null) {
+    		txtResult.setText("Devi prima creare il grafo");
+    		return;
+    	}
+    	
+    	if(!artisti.contains(artista)) {
+    		txtResult.setText("L'artista inserito non è presente nel grafo");
+    		return;
+    	}
+    	
+    	List<Integer> percorso = model.calcolaPercorso(artista);
+    	txtResult.appendText("Numero di esposizioni ottimo: "+model.getPesoMigliore()+"\n");
+    	for(Integer i : percorso) {
+    		txtResult.appendText(i+"\n");
+    	}
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Crea grafo");
+    	String ruolo = boxRuolo.getValue();
+    	if(ruolo==null) {
+    		txtResult.setText("Selezionare un ruolo");
+    		return;
+    	}
+    	
+    	String msg = model.creaGrafo(ruolo);
+    	txtResult.setText(msg);
     }
 
     public void setModel(Model model) {
     	this.model = model;
+    	boxRuolo.getItems().addAll(model.getRoles());
     }
 
     
